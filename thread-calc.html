@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thread Engagement Calculator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ecf0e8;
+            color: #1a2e1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 520px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #1b3a1b;
+            color: #fff;
+            padding: 1.5rem 2rem;
+        }
+
+        .card-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .card-header p {
+            font-size: 0.85rem;
+            color: #8cb88c;
+            margin-top: 0.25rem;
+        }
+
+        .card-body { padding: 2rem; }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #555;
+            margin-bottom: 0.4rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            border: 1px solid #c0ccb8;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #1a2e1a;
+            background: #fafbf9;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+        }
+
+        .field { margin-bottom: 1.25rem; }
+
+        .hint {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
+        .unit-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #c0ccb8;
+        }
+
+        .unit-toggle button {
+            flex: 1;
+            padding: 0.55rem;
+            border: none;
+            background: #fafbf9;
+            color: #555;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0;
+            border-radius: 0;
+        }
+
+        .unit-toggle button.active {
+            background: #2e7d32;
+            color: #fff;
+        }
+
+        button.calc-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2e7d32;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        button.calc-btn:hover { background: #256b28; }
+
+        .results {
+            display: none;
+            margin-top: 1.75rem;
+            border-top: 1px solid #e8e8e8;
+            padding-top: 1.5rem;
+        }
+
+        .results h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .result-row:last-child { border-bottom: none; }
+
+        .result-label { font-size: 0.9rem; color: #555; }
+
+        .result-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a2e1a;
+        }
+
+        .result-value.highlight {
+            color: #2e7d32;
+            font-size: 1.15rem;
+        }
+
+        .note {
+            margin-top: 1.25rem;
+            padding: 0.75rem 1rem;
+            background: #eef5ee;
+            border-left: 3px solid #2e7d32;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: #444;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <h1>Thread Engagement Calculator</h1>
+            <p>Estimate minimum thread engagement length</p>
+        </div>
+        <div class="card-body">
+            <div class="unit-toggle" id="unitToggle">
+                <button class="active" onclick="setUnit('metric')">Metric</button>
+                <button onclick="setUnit('imperial')">Imperial</button>
+            </div>
+
+            <div class="field" id="presetField">
+                <label for="preset">Common Bolt Size</label>
+                <select id="preset" onchange="applyPreset()">
+                    <option value="">-- Custom --</option>
+                </select>
+                <div class="hint" id="presetHint">Select a standard size or enter custom values below</div>
+            </div>
+
+            <div class="field">
+                <label for="diameter">Bolt Major Diameter</label>
+                <input type="number" id="diameter" step="any" min="0" placeholder="e.g. 10">
+                <div class="hint" id="diaHint">In millimeters (mm)</div>
+            </div>
+            <div class="field">
+                <label for="pitch">Thread Pitch</label>
+                <input type="number" id="pitch" step="any" min="0" placeholder="e.g. 1.5">
+                <div class="hint" id="pitchHint">In millimeters (mm)</div>
+            </div>
+            <div class="field">
+                <label for="material">Material</label>
+                <select id="material">
+                    <option value="1.0">Steel into Steel (1.0x)</option>
+                    <option value="1.5">Steel into Cast Iron (1.5x)</option>
+                    <option value="2.0">Steel into Aluminum (2.0x)</option>
+                    <option value="2.5">Steel into Plastic (2.5x)</option>
+                </select>
+                <div class="hint">Softer materials need longer engagement</div>
+            </div>
+            <button class="calc-btn" onclick="calculate()">Calculate</button>
+
+            <div class="results" id="results">
+                <h2>Results</h2>
+                <div class="result-row" id="rowBoltSize" style="display:none">
+                    <span class="result-label">Bolt Size</span>
+                    <span class="result-value" id="outSize"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Major Diameter</span>
+                    <span class="result-value" id="outDia"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Thread Pitch</span>
+                    <span class="result-value" id="outPitch"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Threads Engaged</span>
+                    <span class="result-value" id="outThreads"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Material Factor</span>
+                    <span class="result-value" id="outFactor"></span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Min. Engagement Length</span>
+                    <span class="result-value highlight" id="outLength"></span>
+                </div>
+                <div class="note" id="outNote"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUnit = 'metric';
+
+        const metricPresets = [
+            { name: 'M1 \u00d7 0.25',    dia: 1,    pitch: 0.25 },
+            { name: 'M1.6 \u00d7 0.35',  dia: 1.6,  pitch: 0.35 },
+            { name: 'M2 \u00d7 0.4',     dia: 2,    pitch: 0.4 },
+            { name: 'M2.5 \u00d7 0.45',  dia: 2.5,  pitch: 0.45 },
+            { name: 'M3 \u00d7 0.5',     dia: 3,    pitch: 0.5 },
+            { name: 'M4 \u00d7 0.7',     dia: 4,    pitch: 0.7 },
+            { name: 'M5 \u00d7 0.8',     dia: 5,    pitch: 0.8 },
+            { name: 'M6 \u00d7 1.0',     dia: 6,    pitch: 1.0 },
+            { name: 'M8 \u00d7 1.25',    dia: 8,    pitch: 1.25 },
+            { name: 'M10 \u00d7 1.5',    dia: 10,   pitch: 1.5 },
+            { name: 'M12 \u00d7 1.75',   dia: 12,   pitch: 1.75 },
+            { name: 'M14 \u00d7 2.0',    dia: 14,   pitch: 2.0 },
+            { name: 'M16 \u00d7 2.0',    dia: 16,   pitch: 2.0 },
+            { name: 'M20 \u00d7 2.5',    dia: 20,   pitch: 2.5 },
+            { name: 'M24 \u00d7 3.0',    dia: 24,   pitch: 3.0 },
+            { name: 'M30 \u00d7 3.5',    dia: 30,   pitch: 3.5 },
+        ];
+
+        // Imperial: UNC coarse thread series (diameter in inches, TPI)
+        const imperialPresets = [
+            { name: '#1-64 UNC',      dia: 0.0730, tpi: 64 },
+            { name: '#2-56 UNC',      dia: 0.0860, tpi: 56 },
+            { name: '#3-48 UNC',      dia: 0.0990, tpi: 48 },
+            { name: '#4-40 UNC',      dia: 0.1120, tpi: 40 },
+            { name: '#5-40 UNC',      dia: 0.1250, tpi: 40 },
+            { name: '#6-32 UNC',      dia: 0.1380, tpi: 32 },
+            { name: '#8-32 UNC',      dia: 0.1640, tpi: 32 },
+            { name: '#10-24 UNC',     dia: 0.1900, tpi: 24 },
+            { name: '#12-24 UNC',     dia: 0.2160, tpi: 24 },
+            { name: '1/4"-20 UNC',    dia: 0.2500, tpi: 20 },
+            { name: '5/16"-18 UNC',   dia: 0.3125, tpi: 18 },
+            { name: '3/8"-16 UNC',    dia: 0.3750, tpi: 16 },
+            { name: '7/16"-14 UNC',   dia: 0.4375, tpi: 14 },
+            { name: '1/2"-13 UNC',    dia: 0.5000, tpi: 13 },
+            { name: '5/8"-11 UNC',    dia: 0.6250, tpi: 11 },
+            { name: '3/4"-10 UNC',    dia: 0.7500, tpi: 10 },
+            { name: '7/8"-9 UNC',     dia: 0.8750, tpi: 9 },
+            { name: '1"-8 UNC',       dia: 1.0000, tpi: 8 },
+            { name: '1-1/4"-7 UNC',   dia: 1.2500, tpi: 7 },
+            { name: '1-1/2"-6 UNC',   dia: 1.5000, tpi: 6 },
+        ];
+
+        function setUnit(unit) {
+            currentUnit = unit;
+            const btns = document.querySelectorAll('#unitToggle button');
+            btns.forEach(b => b.classList.remove('active'));
+            btns[unit === 'metric' ? 0 : 1].classList.add('active');
+
+            if (unit === 'metric') {
+                document.getElementById('diaHint').textContent = 'In millimeters (mm)';
+                document.getElementById('pitchHint').textContent = 'In millimeters (mm)';
+                document.getElementById('diameter').placeholder = 'e.g. 10';
+                document.getElementById('pitch').placeholder = 'e.g. 1.5';
+                document.querySelector('label[for="pitch"]').textContent = 'Thread Pitch';
+            } else {
+                document.getElementById('diaHint').textContent = 'In inches (in)';
+                document.getElementById('pitchHint').textContent = 'Threads per inch';
+                document.getElementById('diameter').placeholder = 'e.g. 0.5';
+                document.getElementById('pitch').placeholder = 'e.g. 13';
+                document.querySelector('label[for="pitch"]').textContent = 'Threads Per Inch (TPI)';
+            }
+
+            document.getElementById('diameter').value = '';
+            document.getElementById('pitch').value = '';
+            document.getElementById('results').style.display = 'none';
+            populatePresets();
+        }
+
+        function populatePresets() {
+            const sel = document.getElementById('preset');
+            sel.innerHTML = '<option value="">-- Custom --</option>';
+            const list = currentUnit === 'metric' ? metricPresets : imperialPresets;
+            list.forEach((p, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = p.name;
+                sel.appendChild(opt);
+            });
+        }
+
+        function applyPreset() {
+            const sel = document.getElementById('preset');
+            if (sel.value === '') {
+                document.getElementById('diameter').value = '';
+                document.getElementById('pitch').value = '';
+                return;
+            }
+            const list = currentUnit === 'metric' ? metricPresets : imperialPresets;
+            const p = list[parseInt(sel.value)];
+            document.getElementById('diameter').value = p.dia;
+            document.getElementById('pitch').value = currentUnit === 'metric' ? p.pitch : p.tpi;
+        }
+
+        function calculate() {
+            let d = parseFloat(document.getElementById('diameter').value);
+            let pitchInput = parseFloat(document.getElementById('pitch').value);
+            const sel = document.getElementById('material');
+            const factor = parseFloat(sel.value);
+            const materialName = sel.options[sel.selectedIndex].text;
+
+            if (!d || d <= 0 || !pitchInput || pitchInput <= 0) {
+                alert('Please enter valid positive values for diameter and pitch/TPI.');
+                return;
+            }
+
+            // Convert imperial to mm for calculation
+            let dMm, pitchMm, dDisplay, pitchDisplay, unitLabel;
+            if (currentUnit === 'imperial') {
+                dMm = d * 25.4;
+                pitchMm = 25.4 / pitchInput;
+                dDisplay = d.toFixed(4) + ' in';
+                pitchDisplay = pitchInput + ' TPI (' + pitchMm.toFixed(3) + ' mm)';
+                unitLabel = 'in';
+            } else {
+                dMm = d;
+                pitchMm = pitchInput;
+                dDisplay = d.toFixed(2) + ' mm';
+                pitchDisplay = pitchInput.toFixed(2) + ' mm';
+                unitLabel = 'mm';
+            }
+
+            // Rule of thumb: 0.5 x major diameter, scaled by material factor
+            const baseLengthMm = 0.5 * dMm;
+            const engagementMm = baseLengthMm * factor;
+            const threads = engagementMm / pitchMm;
+
+            // Bolt size label from preset
+            const presetSel = document.getElementById('preset');
+            const list = currentUnit === 'metric' ? metricPresets : imperialPresets;
+            const presetIdx = presetSel.value !== '' ? parseInt(presetSel.value) : -1;
+            const sizeRow = document.getElementById('rowBoltSize');
+            if (presetIdx >= 0) {
+                document.getElementById('outSize').textContent = list[presetIdx].name;
+                sizeRow.style.display = 'flex';
+            } else {
+                sizeRow.style.display = 'none';
+            }
+
+            document.getElementById('outDia').textContent = dDisplay;
+            document.getElementById('outPitch').textContent = pitchDisplay;
+            document.getElementById('outThreads').textContent = '~' + threads.toFixed(1);
+            document.getElementById('outFactor').textContent = factor.toFixed(1) + 'x';
+
+            let engagementDisplay;
+            if (currentUnit === 'imperial') {
+                const engagementIn = engagementMm / 25.4;
+                engagementDisplay = engagementIn.toFixed(4) + ' in (' + engagementMm.toFixed(2) + ' mm)';
+            } else {
+                engagementDisplay = engagementMm.toFixed(2) + ' mm';
+            }
+            document.getElementById('outLength').textContent = engagementDisplay;
+
+            const dLabel = currentUnit === 'imperial'
+                ? d.toFixed(4) + ' in'
+                : d.toFixed(2) + ' mm';
+            document.getElementById('outNote').textContent =
+                `Based on 0.5 \u00d7 ${dLabel} \u00d7 ${factor.toFixed(1)} (${materialName}) = ${engagementDisplay} minimum engagement with ~${threads.toFixed(1)} threads engaged.`;
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        // Initialize presets on load
+        populatePresets();
+    </script>
+</body>
+</html>
